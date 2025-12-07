@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		}
+	], "build_systems": [
+		{
+			"name": "Python",
+			"cmd": ["${project_path}/../venv/bin/python3.14", "-B", "main.py"],
+			"working_dir": "${project_path}/.."
+		}
+	]
+}
