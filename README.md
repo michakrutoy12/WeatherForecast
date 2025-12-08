@@ -1,1 +1,1 @@
-# Neural-Based Weather Forecasting
+# NN-Based Weather Forecasting
