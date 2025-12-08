@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"log/slog"
 	"net/http"
 	"os"
@@ -10,18 +11,21 @@ import (
 )
 
 func main() {
-	godotenv.Load("../../../.env")
+	err := godotenv.Load("../../../.env")
+	if err != nil {
+		log.Fatal("Error loading .env file", err)
+	}
 
-	cfg := cfg.MustLoad()
-	log := setupLogger(cfg.Env)
+	config := cfg.MustLoad()
+	log := setupLogger(config.Env)
 	log.Info("Starting server")
 
 	r := http.NewServeMux()
 	s := http.Server{
-		Addr:        cfg.Address,
+		Addr:        config.Address,
 		Handler:     r,
-		IdleTimeout: cfg.IdleTimeout,
-		ReadTimeout: cfg.Timeout,
+		IdleTimeout: config.IdleTimeout,
+		ReadTimeout: config.Timeout,
 	}
 	log.Info(s.Addr)
 	s.ListenAndServe()
