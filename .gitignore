@@ -1,0 +1,6 @@
+subl/
+.idea/
+.vscode/
+node_modules/
+.env
+__pycache__/
