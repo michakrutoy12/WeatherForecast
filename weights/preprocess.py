@@ -4,6 +4,14 @@ import numpy as np
 import re
 from datetime import datetime
 
+
+columns = ('hour_sin', 'hour_cos', 'day_sin', 'day_cos', 'precipation', 'pressure', 'pressure_trend', 'temperature', 'humidity', 'wind_speed')
+HISTORY_HOURS = 24 * 5
+PREDICTION_HOURS = 24 * 5
+SAMPLING_INTERVAL = 4
+W_epsilon = 1
+
+
 targets = [x for x in os.listdir('dataset') if x.split('.')[-1] == 'csv']
 
 total_read = []
@@ -64,16 +72,18 @@ features = { ## Оценка осадков от 1 до 10
 
 clear_weather = lambda s: re.sub(r'\s*\([^)]*\)', '', s.strip().lower()).replace(')', '').replace('(', '')
 
-data = []
+data = {}
 
 P = [float(x['sea_level_pressure']) for x in total_read]
 T = [float(x['temperature']) for x in total_read]
 P_mean, P_std = np.mean(P), np.std(P)
 T_mean, T_std = np.mean(T), np.std(T)
 
-W_epsilon = 0.001
 W = np.log(np.array([float(x['wind_speed']) for x in total_read]) + W_epsilon)
 W_mean, W_std = np.mean(W), np.std(W)
+
+p_hist = [-1 for i in range(SAMPLING_INTERVAL)]
+p_a = []
 
 for x in total_read:
 	line = {}
@@ -81,19 +91,87 @@ for x in total_read:
 	dt = datetime.strptime(x['date'], "%d.%m.%Y %H:%M")
 	line['hour_sin'] = np.sin(2 * np.pi * dt.hour / 24)
 	line['hour_cos'] = np.cos(2 * np.pi * dt.hour / 24)
-	line['day_of_year_sin'] = np.sin(2 * np.pi * dt.timetuple().tm_yday / 365.25)
-	line['day_of_year_cos'] = np.cos(2 * np.pi * dt.timetuple().tm_yday / 365.25)
+	line['day_sin'] = np.sin(2 * np.pi * dt.timetuple().tm_yday / 365.25)
+	line['day_cos'] = np.cos(2 * np.pi * dt.timetuple().tm_yday / 365.25)
 
 	## Precipitation classification
-	w = [features.get(clear_weather(a), 0) for a in x['weather'].split(',')]
+	w = [features.get(clear_weather(a), 0) / 10 for a in x['weather'].split(',')]
 	line['precipation'] = sum(w) / len(w)
 
-	## Temperature, Pressure and Humidity scale
+	## Temperature, Pressure and Humidity normalization
 	line['pressure'] = (float(x['sea_level_pressure']) - P_mean) / P_std
+	p_hist = p_hist[1:] + [line['pressure']]
+
+	if -1 in p_hist:
+		line['pressure_trend'] = 0.0
+	else:
+		line['pressure_trend'] = float(p_hist[-1] - p_hist[0])
+		p_a.append(line['pressure_trend'])
+
 	line['temperature'] = (float(x['temperature']) - T_mean) / T_std
 	line['humidity'] = int(x['humidity']) / 100
 
 	## Wind Speed normalization
 	line['wind_speed'] = (np.log(float(x['wind_speed']) + W_epsilon) - W_mean) / W_std
 
-	data.append(line)
+	data[int(dt.timestamp())] = line
+
+Pt_mean = np.mean(p_a)
+Pt_std = np.std(p_a)
+
+for timestamp in data:
+	data[timestamp]['pressure_trend'] = (data[timestamp]['pressure_trend'] - Pt_mean) / Pt_std
+
+train = []
+targets = []
+
+def clear_data(data):
+	return np.array([data[c] for c in columns])
+
+for i in range(min(data) + 3600*HISTORY_HOURS, max(data) - 3600*PREDICTION_HOURS, 3600):
+	n = 0
+	train_sample = []
+	target_sample = []
+
+	for j in range(i - 3600*HISTORY_HOURS, i, 3600 * SAMPLING_INTERVAL):
+		if not j in data:
+			n += 1
+		else:
+			train_sample.append(clear_data(data[j]))
+
+	for j in range(i, i + 3600*PREDICTION_HOURS, 3600 * SAMPLING_INTERVAL):
+		if not j in data:
+			n += 1
+		else:
+			target_sample.append(clear_data(data[j]))
+
+	if n == 0:
+		train.append(train_sample)
+		targets.append(target_sample)
+
+complete_data = {
+	'columns': columns,
+
+	'train': np.array(train),
+	'targets': np.array(targets),
+
+	'P_mean': P_mean,
+	'P_std': P_std,
+
+	'Pt_mean': Pt_mean,
+	'Pt_std': Pt_std,
+
+	'T_mean:': T_mean,
+	'T_std': T_std,
+
+	'W_mean': W_mean,
+	'W_std': W_std,
+	'W_epsilon': W_epsilon,
+
+	'history_lenght': HISTORY_HOURS,
+	'prediction_lenght': PREDICTION_HOURS,
+	'sampling_interval': SAMPLING_INTERVAL
+}
+
+with open('dataset/prepaired.pkl', 'wb') as file:
+	pickle.dump(complete_data, file)
