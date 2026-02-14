@@ -33,7 +33,7 @@
             </div>
 
             <div>
-                <div id="dayCard">
+                <div class="dayCard">
                     day
                 </div>
             </div>
@@ -54,6 +54,7 @@
     justify-content: center;
     vertical-align: middle;
     align-items: center;
+    box-shadow: 8px 8px 8px 4px, black;
 }
 
 .leftSide{
@@ -66,18 +67,22 @@ flex-direction: column;
 text-align: left;
 border-radius: 0.5rem;
 justify-content: space-between;
+z-index: 1;
+box-shadow: 2px 2px 12px 2px black;
 }
 
 .rightSide{
-    background: #000080;
+    background: #000F49;
     padding: 8px;
     display: flex;
     align-content: center;
     flex-direction: column;
     text-align: justify;
     justify-content: space-between;
-    box-shadow: 2px 2px 2px 2px, white inset;
     border-radius: 0px 0.5rem 0.5rem 0;
     height: 80%;
+    box-shadow: 2px 2px 16px 0px black;
+    
+
 }
 </style>
