@@ -152,8 +152,8 @@ for i in range(min(data) + 3600*HISTORY_HOURS, max(data) - 3600*PREDICTION_HOURS
 complete_data = {
 	'columns': columns,
 
-	'train': np.array(train),
-	'targets': np.array(targets),
+	'train': np.array(train, dtype=np.float32),
+	'targets': np.array(targets, dtype=np.float32),
 
 	'P_mean': P_mean,
 	'P_std': P_std,
@@ -161,7 +161,7 @@ complete_data = {
 	'Pt_mean': Pt_mean,
 	'Pt_std': Pt_std,
 
-	'T_mean:': T_mean,
+	'T_mean': T_mean,
 	'T_std': T_std,
 
 	'W_mean': W_mean,
@@ -173,5 +173,5 @@ complete_data = {
 	'sampling_interval': SAMPLING_INTERVAL
 }
 
-with open('dataset/prepaired.pkl', 'wb') as file:
+with open('dataset/prepared.pkl', 'wb') as file:
 	pickle.dump(complete_data, file)
