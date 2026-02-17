@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import os
 import pickle
 import numpy as np
@@ -175,3 +176,5 @@ complete_data = {
 
 with open('dataset/prepared.pkl', 'wb') as file:
 	pickle.dump(complete_data, file)
+=======
+>>>>>>> e00f0e7b01620266f5648df0e34b050b88364f4f

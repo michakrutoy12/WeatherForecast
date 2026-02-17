@@ -1,3 +1,6 @@
+<<<<<<< HEAD
+/node_modules
+=======
 subl/
 .idea/
 .vscode/
@@ -5,4 +8,9 @@ node_modules/
 .env
 __pycache__/
 venv/
+<<<<<<< HEAD
 weights/dataset/prepared.pkl
+=======
+
+>>>>>>> fed5fc2b8106189ebbecf405d5f1e5cb529111db
+>>>>>>> e00f0e7b01620266f5648df0e34b050b88364f4f
