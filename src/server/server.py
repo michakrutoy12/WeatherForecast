@@ -5,4 +5,4 @@ app = Flask(__name__)
 
 @app.route('/weather', methods=['GET'])
 def main():
-	return 'WEATHER ENDPOINT'
+	return jsonify({'samples': {'temperature': [], 'precipation': [], 'wind': []}}) # N = Days * Sample Rate
