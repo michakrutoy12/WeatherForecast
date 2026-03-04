@@ -1,32 +1,41 @@
-from src.predict import WeatherPredictModel
-import torch
-import pickle
+# from src.predict import LSTMInformer
+# import torch
+# import pickle
 
-device = torch.device('cpu')
-model = WeatherPredictModel()
-model.load_state_dict(torch.load('weights/weights.pth', map_location=device))
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# model = LSTMInformer()
+# model.load_state_dict(torch.load('./weights/weights.pth', map_location=device))
 
-with open('weights/dataset/prepared.pkl', 'rb') as file:
-	dataset = pickle.load(file)
+# with open('weights/dataset/prepared.pkl', 'rb') as file:
+# 	dataset = pickle.load(file)
 
-del dataset['columns']
-del dataset['train']
-del dataset['targets']
+# del dataset['columns']
+# del dataset['train']
+# del dataset['targets']
 
-def predict(model, X, device=device):
-    X_test_tensor = torch.tensor(X, dtype=torch.float32).to(device)
-    model.eval()
+# def predict(model, X, device=device):
+#     model.eval()
+#     with torch.no_grad():
+#         tensor_x = torch.from_numpy(X).unsqueeze(0).to(device)
+        
+#         output = model(tensor_x)
+#         pred_norm = output.squeeze().cpu().numpy()
+        
+#         prediction_celsius = (pred_norm * dataset['T_std']) + dataset['T_mean']
+        
+#         return prediction_celsius
+
+# def preprocess(day_cos, day_sin, hour_cos, hour_sin, pressure, pressure_trend, temperature, humidity, wind_speed):
+#     norm_pressure = (pressure - dataset['P_mean']) / dataset['P_std']
+#     norm_trend = (pressure_trend - dataset['Pt_mean']) / dataset['Pt_std']
+#     norm_temp = (temperature - dataset['T_mean']) / dataset['T_std']
     
-    with torch.no_grad():
-        temp_pred, precip_pred = model(X_test_tensor)
+#     norm_wind = (np.log(wind_speed + dataset['W_epsilon']) - dataset['W_mean']) / dataset['W_std']
     
-    return temp_pred.cpu().numpy(), precip_pred.cpu().numpy()
+#     norm_hum = humidity / 100.0
 
-def compute(day_cos, day_sin, hour_cos, hour_sin, pressure, pressure_trend, temperature, humidity, wind_speed):
-    T_norm = (np.array(T_raw) - dataset['T_mean']) / dataset['T_std']
-    P_norm = (np.array(P_raw) - dataset['P_mean']) / dataset['P_std']
-    U_norm = (np.array(U_raw) - dataset['U_mean']) / dataset['U_std']
-
-    output = predict(model, np.array([[T_norm, P_norm, U_norm]]))
-
-    return (output[0][0] * dataset['T_std'] + dataset['T_mean']).tolist(), (output[1][0] * 100).tolist()
+#     return np.array([
+#         hour_sin, hour_cos, day_sin, day_cos, 
+#         precipation, norm_pressure, norm_trend, 
+#         norm_temp, norm_hum, norm_wind
+#     ], dtype=np.float32)

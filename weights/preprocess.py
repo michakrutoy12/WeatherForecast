@@ -4,17 +4,15 @@ import numpy as np
 import re
 from datetime import datetime
 
-
 columns = ('hour_sin', 'hour_cos', 'day_sin', 'day_cos', 'precipation', 'pressure', 'pressure_trend', 'temperature', 'humidity', 'wind_speed')
 HISTORY_HOURS = 24 * 5
 PREDICTION_HOURS = 24 * 5
 SAMPLING_INTERVAL = 4
 W_epsilon = 1
 
-
 targets = [x for x in os.listdir('dataset') if x.split('.')[-1] == 'csv']
 
-total_read = []
+total_read = []	
 
 for target in targets:
 	with open("dataset/" + target, 'r', encoding='UTF-8') as file:
@@ -109,7 +107,7 @@ for x in total_read:
 		p_a.append(line['pressure_trend'])
 
 	line['temperature'] = (float(x['temperature']) - T_mean) / T_std
-	line['humidity'] = int(x['humidity']) / 100
+	line['humidity'] = int(x['humidity']) / 100 - 0.5
 
 	## Wind Speed normalization
 	line['wind_speed'] = (np.log(float(x['wind_speed']) + W_epsilon) - W_mean) / W_std
