@@ -9,7 +9,7 @@ with open('./weights/dataset/prepared.pkl', 'rb') as f:
 X = torch.from_numpy(prep_data['train'])
 Y = torch.from_numpy(prep_data['targets'])
 
-train_idx = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+train_idx = [0, 1, 2, 3, 5, 6, 7, 8]
 targets_idx = [4, 5, 7, 8, 9]
 
 dataset = TensorDataset(X[:, :, train_idx], Y[:, :, targets_idx])

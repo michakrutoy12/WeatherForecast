@@ -1,5 +1,5 @@
 from flask import Flask, jsonify
-from src.predict import WeatherPredictModel, compute
+from src.predict import compute
 
 app = Flask(__name__)
 

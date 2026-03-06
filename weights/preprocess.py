@@ -103,7 +103,7 @@ for x in total_read:
 	if -1 in p_hist:
 		line['pressure_trend'] = 0.0
 	else:
-		line['pressure_trend'] = float(p_hist[-1] - p_hist[0])
+		line['pressure_trend'] = float(p_hist[-1] - p_hist[0]) * P_std
 		p_a.append(line['pressure_trend'])
 
 	line['temperature'] = (float(x['temperature']) - T_mean) / T_std
