@@ -1,0 +1,362 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+}
+
+#app {
+    min-height: 100vh;
+}
+
+/* Основной контейнер с динамическим фоном */
+.weather-container {
+    min-height: 100vh;
+    transition: background 0.5s ease;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Тема в зависимости от температуры */
+.theme-cold {
+    background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);
+}
+
+.theme-cool {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.theme-warm {
+    background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+}
+
+.theme-hot {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+
+.theme-default {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* Анимированные частицы */
+.animated-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.particle {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: float 4s infinite ease-in-out;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
+    50% { transform: translateY(-20px) translateX(10px); opacity: 0.5; }
+}
+
+/* Контент */
+.content {
+    position: relative;
+    z-index: 2;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 40px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
+}
+
+
+/* Основная погода */
+.main-weather {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border-radius: 40px;
+    padding: 40px;
+    margin-bottom: 30px;
+    text-align: center;
+    color: white;
+    animation: fadeInUp 0.6s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.location-info h2 {
+    font-size: 28px;
+    margin-bottom: 8px;
+}
+
+.date {
+    opacity: 0.9;
+    font-size: 14px;
+}
+
+.weather-icon-large i {
+    font-size: 100px;
+    margin: 20px 0;
+}
+
+.temp-large {
+    font-size: 80px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.weather-desc {
+    font-size: 20px;
+    text-transform: capitalize;
+    margin: 20px 0 30px 0;
+}
+
+.weather-details {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.detail-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 12px 20px;
+    border-radius: 20px;
+}
+
+.detail-card i {
+    font-size: 28px;
+}
+
+.detail-value {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.detail-label {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+/* Скелетон */
+.skeleton {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 40px;
+    padding: 40px;
+    margin-bottom: 30px;
+}
+
+.skeleton-header {
+    height: 60px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    margin-bottom: 20px;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.skeleton-temp {
+    height: 120px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    margin-bottom: 20px;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.skeleton-details {
+    height: 80px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Прогноз на неделю */
+.forecast-section {
+    margin-bottom: 30px;
+}
+
+.forecast-section h3 {
+    color: white;
+    margin-bottom: 20px;
+    font-size: 20px;
+}
+
+.daily-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.day-card {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 20px;
+    color: white;
+    transition: all 0.3s;
+}
+
+.day-card:hover {
+    transform: translateY(-3px);
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.day-name {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.day-date {
+    font-size: 12px;
+    opacity: 0.8;
+    margin-bottom: 15px;
+}
+
+.day-icon {
+    font-size: 40px;
+    margin: 10px 0;
+    display: block;
+}
+
+.day-temp {
+    display: flex;
+    justify-content: center;
+    margin: 15px 0;
+}
+
+.temp-current {
+    font-weight: 600;
+    font-size: 20px;
+}
+
+.humidity-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.humidity-info i {
+    font-size: 14px;
+}
+
+/* Дополнительная статистика */
+.extra-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    color: white;
+}
+
+.stat-icon i {
+    font-size: 36px;
+}
+
+.stat-label {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.stat-value {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .content {
+        padding: 15px;
+    }
+
+    .header {
+        flex-direction: column;
+    }
+
+    .search-section {
+        max-width: 100%;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .temp-large {
+        font-size: 60px;
+    }
+
+    .weather-icon-large i {
+        font-size: 70px;
+    }
+
+    .daily-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .weather-details {
+        gap: 15px;
+    }
+
+    .detail-card {
+        padding: 10px 15px;
+    }
+    
+    .extra-stats {
+        grid-template-columns: 1fr;
+    }
+}
+

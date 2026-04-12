@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>MeteoFlow — прогноз погоды Красноярск</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <!-- Font Awesome 6 (free icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div id="app">
+        <div class="weather-container" :class="themeClass">
+            <!-- Анимированный фон (частицы) -->
+            <div class="animated-bg">
+                <div v-for="n in particlesCount" :key="n" class="particle" :style="getParticleStyle(n)"></div>
+            </div>
+
+            <div class="content">
+                <!-- Хедер -->
+                <header class="header">
+                    <div class="logo">
+                        <span>KrskWeather</span>
+                    </div>
+                </header>
+
+                <!-- Основной блок с погодой -->
+                <div v-if="currentWeather" class="main-weather">
+                    <div class="location-info">
+                        <h2>Красноярск, Россия</h2>
+                        <p class="date">{{ formattedDate }} </p>
+                        <p>{{currentWeather.forecast_hour}} часов</p>
+                    </div>
+
+                    <div class="weather-main">
+                        <div class="weather-icon-large">
+                            <i :class="getWeatherIconByTemp(currentWeather.temperature)"></i>
+                        </div>
+                        <div class="temp-large">
+                            {{ formatTemperature(currentWeather.temperature) }}°
+                        </div>
+                        <div class="weather-desc">
+                            {{ getWeatherDescription(currentWeather.temperature) }}
+                        </div>
+                    </div>
+
+                    <div class="weather-details">
+                        <div class="detail-card">
+                            <i class="fas fa-tint"></i>
+                            <div>
+                                <div class="detail-value">{{ currentWeather.humidity }}%</div>
+                                <div class="detail-label">Влажность</div>
+                            </div>
+                        </div>
+
+                        <div class="detail-card">
+                            <div>
+                                <div class="detail-value">{{ currentWeather.pressure }} мм рт. ст.</div>
+                                <div class="detail-label">Давление</div>
+                            </div>
+                        </div>
+
+                        <div class="detail-card">
+                            <div>
+                                <div class="detail-value">{{ currentWeather.precipitation }} мм</div>
+                                <div class="detail-label">Осадки</div>
+                            </div>
+                        </div>
+
+                        <div class="detail-card">
+                            <div>
+                                <div class="detail-value">{{ currentWeather.wind_speed }} м/с</div>
+                                <div class="detail-label">Скорость ветра</div>
+                            </div>
+                        </div>
+
+                        <div class="detail-card">
+                            <i class="fas fa-calendar-day"></i>
+                            <div>
+                                <div class="detail-value">{{ formatDateRu(currentWeather.forecast_date) }}</div>
+                                <div class="detail-label">Дата</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Скелетон загрузки -->
+                <div v-else-if="loading" class="skeleton">
+                    <div class="skeleton-header"></div>
+                    <div class="skeleton-temp"></div>
+                    <div class="skeleton-details"></div>
+                </div>
+
+                <!-- Прогноз на неделю -->
+                <div v-if="weeklyForecast.length" class="forecast-section">
+                    <h3><i class="fas fa-calendar-week"></i> Прогноз на следующие 3 дня</h3>
+                    <div class="daily-grid">
+                        <div v-for="day in weeklyForecast" :key="day.id" class="day-card">
+                            <div class="day-name">{{ formatDayOfWeek(day.forecast_date) }}</div>
+                            <div class="day-date">{{ formatDateRu(day.forecast_date) }}</div>
+                            <i :class="getWeatherIconByTemp(day.temperature)" class="day-icon"></i>
+                            <div class="day-temp">
+                                <span class="temp-current">{{ formatTemperature(day.temperature) }}°</span>
+                            </div>
+                            <div class="humidity-info">
+                                <i class="fas fa-tint"></i>
+                                <span>{{ day.humidity }}%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Статистика -->
+                <div v-if="weeklyForecast.length" class="extra-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+                        <div class="stat-info">
+                            <div class="stat-label">Средняя температура</div>
+                            <div class="stat-value">{{ formatTemperature(averageTemp) }}°</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-tachometer-alt"></i></div>
+                        <div class="stat-info">
+                            <div class="stat-label">Средняя влажность</div>
+                            <div class="stat-value">{{ averageHumidity }}%</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-thermometer-full"></i></div>
+                        <div class="stat-info">
+                            <div class="stat-label">Макс. температура</div>
+                            <div class="stat-value">{{ formatTemperature(maxTemp) }}°</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-thermometer-empty"></i></div>
+                        <div class="stat-info">
+                            <div class="stat-label">Мин. температура</div>
+                            <div class="stat-value">{{ formatTemperature(minTemp) }}°</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
