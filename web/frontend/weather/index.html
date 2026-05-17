@@ -3,151 +3,597 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>MeteoFlow — прогноз погоды Красноярск</title>
-    <link rel="stylesheet" href="style.css">
-    <!-- Google Fonts -->
+    <title>Погода в Красноярске — KrskWeather</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
-    <!-- Font Awesome 6 (free icons) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            transition: background 0.5s ease, color 0.3s ease;
+            padding: 1.5rem;
+        }
+
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.5;
+            animation: floatParticle linear infinite;
+            pointer-events: none;
+        }
+
+        .particle.rain {
+            background-color: #7fc9ff;
+            border-radius: 0 50% 50% 50%;
+            width: 4px;
+            height: 8px;
+            opacity: 0.6;
+        }
+
+        .particle.snow {
+            background-color: #ffffffcc;
+            border-radius: 50%;
+            box-shadow: 0 0 3px white;
+        }
+
+        .particle.dust {
+            background-color: #ffd966aa;
+            border-radius: 60% 40% 50% 50%;
+        }
+
+        @keyframes floatParticle {
+            0% {
+                transform: translateY(-10vh) translateX(0) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.7;
+            }
+            90% {
+                opacity: 0.5;
+            }
+            100% {
+                transform: translateY(110vh) translateX(20px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .weather-card {
+            backdrop-filter: blur(12px);
+            background: rgba(20, 20, 30, 0.35);
+            border-radius: 2rem;
+            padding: 1.5rem;
+            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.3);
+            transition: all 0.2s;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        body.theme-sunny {
+            background: linear-gradient(145deg, #f9a01b 0%, #ffdd77 100%);
+            color: #2c1c0a;
+        }
+        body.theme-sunny .weather-card {
+            background: rgba(255, 245, 200, 0.55);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,215,120,0.9);
+            color: #2c1c0a;
+        }
+        body.theme-cloudy {
+            background: linear-gradient(145deg, #738598 0%, #b0bed0 100%);
+            color: #1e2a36;
+        }
+        body.theme-cloudy .weather-card {
+            background: rgba(210, 220, 235, 0.6);
+            color: #1f2c38;
+        }
+        body.theme-rainy {
+            background: linear-gradient(145deg, #2c5364, #203a43, #0f2027);
+            color: #e0eef7;
+        }
+        body.theme-rainy .weather-card {
+            background: rgba(40, 60, 80, 0.6);
+            color: #eef4ff;
+        }
+        body.theme-snowy {
+            background: linear-gradient(145deg, #c9e9ff, #e0f0fa, #9bb7d4);
+            color: #1f3b4c;
+        }
+        body.theme-snowy .weather-card {
+            background: rgba(245, 250, 255, 0.7);
+            color: #1f3442;
+        }
+
+        .cards-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+
+        .day-card {
+            flex: 1;
+            min-width: 320px;
+        }
+
+        .day-header {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .date-badge {
+            font-size: 1rem;
+            font-weight: 500;
+            background: rgba(0,0,0,0.2);
+            padding: 0.2rem 0.8rem;
+            border-radius: 40px;
+        }
+
+        .temp-summary {
+            font-size: 2rem;
+            font-weight: 600;
+            margin: 1rem 0 0.2rem;
+        }
+
+        .precip-summary {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 1.2rem;
+        }
+
+        canvas {
+            max-height: 220px;
+            width: 100%;
+            margin: 0.5rem 0;
+            background: rgba(0,0,0,0.1);
+            border-radius: 1rem;
+            padding: 0.2rem;
+        }
+
+        .hourly-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            margin-top: 0.8rem;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .legend {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+            font-size: 0.75rem;
+            background: rgba(0,0,0,0.25);
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .legend span {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        h1 {
+            font-weight: 600;
+            font-size: 2rem;
+            letter-spacing: -0.01em;
+            text-align: center;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            margin-bottom: 0.5rem;
+        }
+
+        .location-badge {
+            text-align: center;
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            font-size: 1.2rem;
+            backdrop-filter: blur(8px);
+            border-radius: 2rem;
+            background: rgba(0,0,0,0.2);
+        }
+
+        .error {
+            text-align: center;
+            padding: 2rem;
+            color: #ffcccc;
+            background: rgba(0,0,0,0.5);
+            border-radius: 1rem;
+            margin: 2rem;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 2.5rem;
+            font-size: 0.7rem;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 750px) {
+            body {
+                padding: 1rem;
+            }
+            .day-card {
+                min-width: 280px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div id="app">
-        <div class="weather-container" :class="themeClass">
-            <!-- Анимированный фон (частицы) -->
-            <div class="animated-bg">
-                <div v-for="n in particlesCount" :key="n" class="particle" :style="getParticleStyle(n)"></div>
-            </div>
+<div id="app">
+    <div class="particles" ref="particlesContainer"></div>
+    <div class="app-container">
+        <h1>KrskWeather - Погода в Красноярске</h1>
 
-            <div class="content">
-                <!-- Хедер -->
-                <header class="header">
-                    <div class="logo">
-                        <span>KrskWeather</span>
+        
+        <div v-if="loading" class="loading">
+            ⏳ Загружаем свежий прогноз для Красноярска...
+        </div>
+        
+        <div v-else-if="error" class="error">
+            ❌ Ошибка: {{ error }}<br/>
+            <button @click="fetchWeather" style="margin-top:1rem; padding:0.5rem 1rem; background:rgba(255,255,255,0.2); border:none; border-radius:2rem; cursor:pointer;">🔄 Попробовать снова</button>
+        </div>
+        
+        <div v-else-if="forecastDays.length > 0">
+            <div class="cards-grid">
+                <div v-for="(day, idx) in forecastDays" :key="idx" class="day-card weather-card">
+                    <div class="day-header">
+                        <span>{{ day.dayName }}</span>
+                        <span class="date-badge">{{ day.dateStr }}</span>
                     </div>
-                </header>
-
-                <!-- Основной блок с погодой -->
-                <div v-if="currentWeather" class="main-weather">
-                    <div class="location-info">
-                        <h2>Красноярск, Россия</h2>
-                        <p class="date">{{ formattedDate }} </p>
-                        <p>{{currentWeather.forecast_hour}} часов</p>
+                    <div class="temp-summary">
+                        {{ Math.round(day.avgTemp) }}°C
+                        <span style="font-size:1rem;">({{ Math.round(day.minTemp) }}°…{{ Math.round(day.maxTemp) }}°)</span>
                     </div>
-
-                    <div class="weather-main">
-                        <div class="weather-icon-large">
-                            <i :class="getWeatherIconByTemp(currentWeather.temperature)"></i>
-                        </div>
-                        <div class="temp-large">
-                            {{ formatTemperature(currentWeather.temperature) }}°
-                        </div>
-                        <div class="weather-desc">
-                            {{ getWeatherDescription(currentWeather.temperature) }}
-                        </div>
+                    <div class="precip-summary">
+                        💧 осадки: {{ day.totalPrecip }} мм 
                     </div>
-
-                    <div class="weather-details">
-                        <div class="detail-card">
-                            <i class="fas fa-tint"></i>
-                            <div>
-                                <div class="detail-value">{{ currentWeather.humidity }}%</div>
-                                <div class="detail-label">Влажность</div>
-                            </div>
-                        </div>
-
-                        <div class="detail-card">
-                            <div>
-                                <div class="detail-value">{{ currentWeather.pressure }} мм рт. ст.</div>
-                                <div class="detail-label">Давление</div>
-                            </div>
-                        </div>
-
-                        <div class="detail-card">
-                            <div>
-                                <div class="detail-value">{{ currentWeather.precipitation }} мм</div>
-                                <div class="detail-label">Осадки</div>
-                            </div>
-                        </div>
-
-                        <div class="detail-card">
-                            <div>
-                                <div class="detail-value">{{ currentWeather.wind_speed }} м/с</div>
-                                <div class="detail-label">Скорость ветра</div>
-                            </div>
-                        </div>
-
-                        <div class="detail-card">
-                            <i class="fas fa-calendar-day"></i>
-                            <div>
-                                <div class="detail-value">{{ formatDateRu(currentWeather.forecast_date) }}</div>
-                                <div class="detail-label">Дата</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Скелетон загрузки -->
-                <div v-else-if="loading" class="skeleton">
-                    <div class="skeleton-header"></div>
-                    <div class="skeleton-temp"></div>
-                    <div class="skeleton-details"></div>
-                </div>
-
-                <!-- Прогноз на неделю -->
-                <div v-if="weeklyForecast.length" class="forecast-section">
-                    <h3><i class="fas fa-calendar-week"></i> Прогноз на следующие 3 дня</h3>
-                    <div class="daily-grid">
-                        <div v-for="day in weeklyForecast" :key="day.id" class="day-card">
-                            <div class="day-name">{{ formatDayOfWeek(day.forecast_date) }}</div>
-                            <div class="day-date">{{ formatDateRu(day.forecast_date) }}</div>
-                            <i :class="getWeatherIconByTemp(day.temperature)" class="day-icon"></i>
-                            <div class="day-temp">
-                                <span class="temp-current">{{ formatTemperature(day.temperature) }}°</span>
-                            </div>
-                            <div class="humidity-info">
-                                <i class="fas fa-tint"></i>
-                                <span>{{ day.humidity }}%</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Статистика -->
-                <div v-if="weeklyForecast.length" class="extra-stats">
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
-                        <div class="stat-info">
-                            <div class="stat-label">Средняя температура</div>
-                            <div class="stat-value">{{ formatTemperature(averageTemp) }}°</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class="fas fa-tachometer-alt"></i></div>
-                        <div class="stat-info">
-                            <div class="stat-label">Средняя влажность</div>
-                            <div class="stat-value">{{ averageHumidity }}%</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class="fas fa-thermometer-full"></i></div>
-                        <div class="stat-info">
-                            <div class="stat-label">Макс. температура</div>
-                            <div class="stat-value">{{ formatTemperature(maxTemp) }}°</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class="fas fa-thermometer-empty"></i></div>
-                        <div class="stat-info">
-                            <div class="stat-label">Мин. температура</div>
-                            <div class="stat-value">{{ formatTemperature(minTemp) }}°</div>
-                        </div>
+                    <canvas :id="'chart-day-' + idx" width="400" height="180" style="width:100%; max-height:200px;"></canvas>
+                    <div class="hourly-stats">
+                        <span>🌡️ Температура (°C)</span>
+                        <span>💧 Осадки (мм)</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
+
+<script>
+    const { createApp, ref, onMounted, watch, nextTick } = Vue;
     
-    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
-    <script src="app.js"></script>
+    createApp({
+        setup() {
+            const forecastDays = ref([]);
+            const particlesContainer = ref(null);
+            const loading = ref(true);
+            const error = ref(null);
+            const currentDate = ref('');
+            let charts = {};
+            let particleInterval = null;
+            function getWeatherThemeFromData(hourlyData) {
+                let totalPrecip = 0;
+                let avgTemp = 0;
+                for(let h of hourlyData) {
+                    totalPrecip += h.precipitation || 0;
+                    avgTemp += h.temperature;
+                }
+                avgTemp /= hourlyData.length;
+
+                if(avgTemp < 1 && totalPrecip > 1.5) return 'snowy';
+                if(totalPrecip > 8) return 'rainy';
+                if(totalPrecip > 2) return 'rainy';
+                if(avgTemp > 20 && totalPrecip < 1.5) return 'sunny';
+                if(avgTemp > 12) return 'cloudy';
+                if(avgTemp > 3) return 'cloudy';
+                return 'snowy';
+            }
+
+            function updateThemeAndParticles() {
+                if(!forecastDays.value.length) return;
+                const allHourly = [...forecastDays.value[0].hourlyData, ...forecastDays.value[1].hourlyData];
+                const theme = getWeatherThemeFromData(allHourly);
+                
+                const body = document.body;
+                body.classList.remove('theme-sunny', 'theme-cloudy', 'theme-rainy', 'theme-snowy');
+                body.classList.add(`theme-${theme}`);
+                if(particleInterval) clearInterval(particleInterval);
+                const container = particlesContainer.value;
+                if(!container) return;
+                container.innerHTML = '';
+                
+                let particleType = '';
+                if(theme === 'snowy') particleType = 'snow';
+                else if(theme === 'rainy') particleType = 'rain';
+                else particleType = 'dust';
+                
+                const particleCount = theme === 'snowy' ? 90 : (theme === 'rainy' ? 110 : 60);
+                for(let i=0; i<particleCount; i++) {
+                    const particle = document.createElement('div');
+                    particle.classList.add('particle');
+                    if(particleType === 'snow') particle.classList.add('snow');
+                    else if(particleType === 'rain') particle.classList.add('rain');
+                    else particle.classList.add('dust');
+                    
+                    const size = particleType === 'snow' ? 3 + Math.random() * 7 : (particleType === 'rain' ? 2+Math.random()*5 : 2+Math.random()*6);
+                    particle.style.width = `${size}px`;
+                    particle.style.height = particleType === 'rain' ? `${size*1.8}px` : `${size}px`;
+                    particle.style.left = `${Math.random() * 100}%`;
+                    particle.style.animationDuration = `${3 + Math.random() * 8}s`;
+                    particle.style.animationDelay = `${Math.random() * 10}s`;
+                    particle.style.opacity = 0.3 + Math.random() * 0.5;
+                    
+                    if(particleType === 'snow') particle.style.backgroundColor = '#ffffffcc';
+                    else if(particleType === 'rain') particle.style.backgroundColor = '#90dcff';
+                    else particle.style.backgroundColor = `rgba(255, 210, 90, ${0.3+Math.random()*0.4})`;
+                    
+                    container.appendChild(particle);
+                }
+                
+                particleInterval = setInterval(() => {
+                    if(!container) return;
+                    if(container.children.length > 200) return;
+                    const extra = document.createElement('div');
+                    extra.classList.add('particle');
+                    if(particleType === 'snow') extra.classList.add('snow');
+                    else if(particleType === 'rain') extra.classList.add('rain');
+                    else extra.classList.add('dust');
+                    extra.style.width = `${(particleType === 'rain' ? 2 : 2) + Math.random() * 6}px`;
+                    extra.style.height = particleType === 'rain' ? `${6+Math.random()*8}px` : `${3+Math.random()*6}px`;
+                    extra.style.left = `${Math.random() * 100}%`;
+                    extra.style.animationDuration = `${4 + Math.random() * 7}s`;
+                    extra.style.animationDelay = `0s`;
+                    container.appendChild(extra);
+                    setTimeout(() => { if(extra && extra.remove) extra.remove(); }, 9000);
+                }, 1800);
+            }
+
+            function initCharts() {
+                if(!forecastDays.value.length) return;
+                nextTick(() => {
+                    forecastDays.value.forEach((day, idx) => {
+                        const canvasId = `chart-day-${idx}`;
+                        const canvasElem = document.getElementById(canvasId);
+                        if(!canvasElem) return;
+                        const ctx = canvasElem.getContext('2d');
+                        if(charts[idx]) {
+                            charts[idx].destroy();
+                        }
+                        
+                        const hoursLabels = day.hourlyData.map(h => h.timeLabel);
+                        const tempsData = day.hourlyData.map(h => h.temperature);
+                        const precipData = day.hourlyData.map(h => h.precipitation);
+                        
+                        const chart = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: hoursLabels,
+                                datasets: [
+                                    {
+                                        label: 'Температура (°C)',
+                                        data: tempsData,
+                                        borderColor: '#ff6b4a',
+                                        backgroundColor: 'rgba(255, 107, 74, 0.1)',
+                                        borderWidth: 2.5,
+                                        tension: 0.3,
+                                        pointRadius: 1.8,
+                                        pointBackgroundColor: '#ff835f',
+                                        yAxisID: 'y-temp',
+                                        fill: false,
+                                    },
+                                    {
+                                        label: 'Осадки (мм)',
+                                        data: precipData,
+                                        borderColor: '#3b9eff',
+                                        backgroundColor: 'rgba(59, 158, 255, 0.3)',
+                                        borderWidth: 1.5,
+                                        type: 'bar',
+                                        yAxisID: 'y-precip',
+                                        barPercentage: 0.6,
+                                        categoryPercentage: 0.8
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: true,
+                                plugins: {
+                                    tooltip: { mode: 'index', intersect: false },
+                                    legend: { position: 'top', labels: { font: { size: 10 }, boxWidth: 12 } }
+                                },
+                                scales: {
+                                    'y-temp': {
+                                        position: 'left',
+                                        title: { display: true, text: '°C', font: { size: 9 } },
+                                        grid: { color: 'rgba(0,0,0,0.1)' }
+                                    },
+                                    'y-precip': {
+                                        position: 'right',
+                                        title: { display: true, text: 'мм', font: { size: 9 } },
+                                        grid: { drawOnChartArea: false },
+                                        min: 0,
+                                    }
+                                },
+                                elements: { point: { radius: 1 } }
+                            }
+                        });
+                        charts[idx] = chart;
+                    });
+                });
+            }
+            async function fetchWeather() {
+                loading.value = true;
+                error.value = null;
+                
+                try {
+                    const lat = 56.0153;
+                    const lon = 92.8932;
+
+                    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation&timezone=auto&forecast_days=2`;
+                    
+                    const response = await axios.get(url);
+                    const data = response.data;
+                    
+                    if (!data.hourly || !data.hourly.time) {
+                        throw new Error('Не удалось получить данные о погоде');
+                    }
+                    
+                    const times = data.hourly.time;
+                    const temps = data.hourly.temperature_2m;
+                    const precipitations = data.hourly.precipitation;
+                    const todayHours = [];
+                    const tomorrowHours = [];
+                    
+                    for (let i = 0; i < times.length; i++) {
+                        const timeStr = times[i];
+                        const hour = new Date(timeStr).getHours();
+                        const temp = temps[i];
+                        const precip = precipitations[i];
+                        
+                        const hourData = {
+                            hour: hour,
+                            timeLabel: `${hour.toString().padStart(2,'0')}:00`,
+                            temperature: Math.round(temp * 10) / 10,
+                            precipitation: Math.round(precip * 10) / 10
+                        };
+                        
+                        if (i < 24) {
+                            todayHours.push(hourData);
+                        } else {
+                            tomorrowHours.push(hourData);
+                        }
+                    }
+                    function computeStats(hourlyData) {
+                        const tempsArr = hourlyData.map(h => h.temperature);
+                        const precipArr = hourlyData.map(h => h.precipitation);
+                        const avgTemp = tempsArr.reduce((a,b) => a+b,0) / tempsArr.length;
+                        const minTemp = Math.min(...tempsArr);
+                        const maxTemp = Math.max(...tempsArr);
+                        const totalPrecip = precipArr.reduce((a,b) => a+b,0);
+                        const maxPrecipHour = Math.max(...precipArr);
+                        return { avgTemp, minTemp, maxTemp, totalPrecip, maxPrecipHour };
+                    }
+                    
+                    const stats1 = computeStats(todayHours);
+                    const stats2 = computeStats(tomorrowHours);
+                    const now = new Date();
+                    const todayDate = new Date(now);
+                    const tomorrowDate = new Date(now);
+                    tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+                    
+                    const weekdays = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+                    const monthNames = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+                    
+                    forecastDays.value = [
+                        {
+                            dateStr: `${todayDate.getDate()} ${monthNames[todayDate.getMonth()]}`,
+                            dayName: weekdays[todayDate.getDay()],
+                            hourlyData: todayHours,
+                            avgTemp: stats1.avgTemp,
+                            minTemp: stats1.minTemp,
+                            maxTemp: stats1.maxTemp,
+                            totalPrecip: Math.round(stats1.totalPrecip * 10) / 10,
+                            maxPrecipHour: Math.round(stats1.maxPrecipHour * 10) / 10,
+                        },
+                        {
+                            dateStr: `${tomorrowDate.getDate()} ${monthNames[tomorrowDate.getMonth()]}`,
+                            dayName: weekdays[tomorrowDate.getDay()],
+                            hourlyData: tomorrowHours,
+                            avgTemp: stats2.avgTemp,
+                            minTemp: stats2.minTemp,
+                            maxTemp: stats2.maxTemp,
+                            totalPrecip: Math.round(stats2.totalPrecip * 10) / 10,
+                            maxPrecipHour: Math.round(stats2.maxPrecipHour * 10) / 10,
+                        }
+                    ];
+                    
+                    currentDate.value = now.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+                    loading.value = false;
+                    await nextTick();
+                    initCharts();
+                    updateThemeAndParticles();
+                    
+                } catch (err) {
+                    console.error('Ошибка загрузки погоды:', err);
+                    error.value = 'Не удалось загрузить прогноз для Красноярска. Проверьте соединение или попробуйте позже.';
+                    loading.value = false;
+                }
+            }
+            function updateCurrentDate() {
+                const now = new Date();
+                currentDate.value = now.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+            }
+            
+            onMounted(() => {
+                updateCurrentDate();
+                fetchWeather();
+                setInterval(() => {
+                    fetchWeather();
+                }, 30 * 60 * 1000);
+            });
+            watch(forecastDays, () => {
+                nextTick(() => {
+                    initCharts();
+                    updateThemeAndParticles();
+                });
+            }, { deep: true });
+            return {
+                forecastDays,
+                particlesContainer,
+                loading,
+                error,
+                currentDate,
+                fetchWeather
+            };
+        }
+    }).mount('#app');
+</script>
 </body>
 </html>

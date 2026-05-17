@@ -29,15 +29,20 @@ func main() {
 
 	//weatherHandler
 	weatherRepo := weatherHandler.NewWeatherRepo(db)
+
+	// Настройка CORS
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://127.0.0.1:5500"}, // Замените на свой домен
+		AllowedOrigins:   []string{"http://127.0.0.1:5500"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Content-Type", "Authorization"},
-		AllowCredentials: true, // Разрешить куки (нельзя использовать с "*")
+		AllowCredentials: true,
 		Debug:            false,
 	})
+	
 	r := http.NewServeMux()
 	handler := c.Handler(r)
+
+	//init server
 	s := http.Server{
 		Addr:        config.Address,
 		Handler:     handler,
@@ -47,7 +52,7 @@ func main() {
 	fmt.Println("http://" + s.Addr)
 
 	weatherHandler.NewWeatherHandler(r, weatherRepo)
-	// Настройка CORS
+	
 
 	s.ListenAndServe()
 }
