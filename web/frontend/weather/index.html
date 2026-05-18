@@ -283,7 +283,7 @@
         
         <div v-else-if="forecastDays.length > 0">
             <div class="cards-grid">
-                <div v-for="(day, idx) in forecastDays" :key="idx" class="day-card weather-card">
+                <div v-for="(day, idx) in forecastDays.slice(0,1)" :key="idx" class="day-card weather-card">
                     <div class="day-header">
                         <span>{{ day.dayName }}</span>
                         <span class="date-badge">{{ day.dateStr }}</span>
@@ -476,7 +476,7 @@
                     const lat = 56.0153;
                     const lon = 92.8932;
 
-                    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation&timezone=auto&forecast_days=2`;
+                    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation&timezone=auto&forecast_days=1`;
                     
                     const response = await axios.get(url);
                     const data = response.data;
