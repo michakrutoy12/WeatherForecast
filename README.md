@@ -1,1 +1,1 @@
-# NN-Based Weather Forecasting
+# ML-Based Weather Forecasting
